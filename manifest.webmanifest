@@ -1,0 +1,16 @@
+{
+  "name": "Yaku · Agua para tu chacra",
+  "short_name": "Yaku",
+  "description": "Cómo viene el agua para tu chacra en Huachac, valle del Mantaro.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#154204",
+  "icons": [
+    {"src": "icono-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icono-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

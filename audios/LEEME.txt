@@ -1,0 +1,2 @@
+Audios de la app. Nombre del archivo = id del mensaje (ver 07_documentacion/GUION_MENSAJES_YAKU.xlsx).
+es/ = castellano · qu/ = quechua wanka. Los genera 02_scripts/07_audios.py desde 01_fuentes/audios_grabados.

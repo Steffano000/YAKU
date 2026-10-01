@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#154204">
+<meta name="description" content="Yaku: cómo viene el agua para tu chacra en Huachac, valle del Mantaro.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -206,6 +210,27 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
 .nota-qu{background:var(--ochre);border-radius:14px;padding:10px 14px;font-size:15px;font-weight:700;color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:9;max-width:440px;width:calc(100% - 40px);background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 16px;font-size:16px;font-weight:700;box-shadow:var(--shadow)}
 .guardado{color:var(--verde-text);font-weight:800;font-size:17px}
+.ayuda{width:48px;height:48px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--sage);color:var(--primary-text);display:grid;place-items:center;cursor:pointer}
+.ayuda svg{width:26px;height:26px}
+.top-in .ayuda{margin-left:auto}
+@media (min-width:420px){.top-in .ayuda{margin-left:0}}
+.tour{position:fixed;inset:0;z-index:30}
+.tour-hueco{position:fixed;border-radius:20px;box-shadow:0 0 0 4px var(--amarillo),0 0 0 9999px rgba(10,16,8,.62);transition:all .25s ease;pointer-events:none}
+.tour-globo{position:fixed;left:16px;right:16px;max-width:440px;margin:0 auto;background:var(--surface);color:var(--ink);border-radius:20px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px}
+.tour-globo p{font-size:19px;font-weight:700;line-height:1.4}
+.tour-globo small{font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.04em}
+.tour-fila{display:flex;gap:10px;align-items:center}
+.tour-fila .btn{min-height:52px;font-size:17px}
+.tour-fila .btn svg{width:24px;height:24px}
+.tour-voz{width:52px;height:52px;flex:none;border-radius:16px;border:0;background:var(--sage);color:var(--primary-text);display:grid;place-items:center;cursor:pointer}
+.tour-voz svg{width:26px;height:26px}
+.modal{position:fixed;inset:0;z-index:30;background:rgba(10,16,8,.6);display:grid;place-items:center;padding:20px}
+.modal-caja{background:var(--surface);color:var(--ink);border-radius:24px;padding:22px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:16px;text-align:center}
+.modal-caja .grande{width:72px;height:72px;margin:0 auto;border-radius:50%;background:var(--sage);color:var(--primary-text);display:grid;place-items:center}
+.modal-caja .grande svg{width:40px;height:40px}
+.modal-caja h2{font-size:24px;font-weight:800;color:var(--primary-text)}
+.si-no{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (prefers-reduced-motion: reduce){.tour-hueco{transition:none}}
 </style>
 
 <header class="top">
@@ -213,6 +238,7 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#2d5a1b"/><path d="M20 7c5.5 7 9 11.6 9 16.2A9 9 0 0 1 11 23.2C11 18.6 14.5 14 20 7z" fill="#97f3e3"/><path d="M20 31v-9m0 3c-2.6 0-4.5-1.6-4.8-4.2 2.7 0 4.5 1.5 4.8 4.2zm0-2c.3-2.8 2.2-4.4 4.8-4.4-.3 2.7-2.1 4.4-4.8 4.4z" stroke="#154204" stroke-width="1.8" fill="#154204" stroke-linejoin="round"/></svg>
     <div class="marca"><b>Yaku</b><small id="zona"></small></div>
     <span class="datos-pill" id="datos-pill"></span>
+    <button class="ayuda" id="btn-ayuda" type="button" aria-label="Cómo se usa"></button>
     <button class="tema" id="btn-tema" type="button" aria-label="Cambiar a modo oscuro"></button>
     <button class="perfil" id="btn-perfil" type="button" data-ir="datos" aria-label="Mis datos"></button>
   </div>
@@ -220,6 +246,7 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
 
 <main id="app" aria-live="polite"></main>
 <div class="toast" id="toast" role="status" hidden></div>
+<div id="capa-tour"></div>
 
 <nav class="nav" id="nav" aria-label="Secciones">
   <div class="nav-in">
@@ -336,8 +363,23 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     if (q) { var k = q.indexOf("."); tq = k > 0 ? q.slice(0, k) : q; fq = k > 0 ? q.slice(k+1).trim() : ""; }
     return {titulo: par(p.titulo, tq), frase: par(p.texto, fq || null)};
   }
-  function audioIds(f){
-    return (f.piezas || []).map(function(id){ return id === "riego_cada" ? "riego_cada_" + f.riego.cada_dias : id; });
+  /* Lo que se escucha en un mes: cada pieza con su id de audio y su texto en castellano */
+  function listaAudio(f){
+    var c = cult(S.cultivo), out = [];
+    if (!f.en_campana) {
+      out.push({id:"chacra_descanso", es:pieza("chacra_descanso").es});
+      if (f.piezas.indexOf("antes_siembra") >= 0) {
+        out.push({id:"antes_siembra", es:pieza("antes_siembra").es});
+        out.push({id:c.id + "_antes", es:pieza(c.id + "_antes").es});
+      } else consejos(f).forEach(function(k){ out.push({es:k.tx.es}); });
+      return out;
+    }
+    (f.piezas || []).forEach(function(id){
+      var aid = id === "riego_cada" ? "riego_cada_" + f.riego.cada_dias : id;
+      var tx = id.indexOf("agua_") === 0 ? (function(a){ return a.titulo.es + ". " + a.frase.es; })(agua(f.estado)) : pieza(id, f).es;
+      out.push({id:aid, es:tx});
+    });
+    return out;
   }
 
   /* Consejos del mes: {ico, et, tx, aviso} con textos bilingües */
@@ -382,6 +424,7 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
 
   /* ---------- audio: primero audios grabados, si no hay, voz del celular ---------- */
   var hayVoz = "speechSynthesis" in window;
+  var hayAudio = true;
   var sonando = null, cola = [], audioAct = null;
   function toast(msg){ var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ t.hidden = true; }, 4500); }
   function parar(){
@@ -389,50 +432,59 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     if (audioAct) { audioAct.onended = audioAct.onerror = null; audioAct.pause(); audioAct = null; }
     cola = []; sonando = null; pintarBotonesVoz();
   }
-  function hablarTTS(t){
-    if (!hayVoz) { parar(); return; }
-    var x = new SpeechSynthesisUtterance(t); x.lang = "es-PE"; x.rate = 0.9;
-    var vs = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
-    var pe = vs.filter(function(v){ return /PE|419|MX|US/i.test(v.lang); });
-    if (pe.length) x.voice = pe[0]; else if (vs.length) x.voice = vs[0];
-    x.onend = x.onerror = function(){ sonando = null; pintarBotonesVoz(); };
-    speechSynthesis.speak(x);
-  }
-  /* ids: audios grabados; tts: respaldo en castellano */
-  function reproducir(boton, ids, tts){
+  /* Reproduce una lista de piezas: audio grabado si existe; si no, la voz del celular.
+     Castellano -> audios/es · Runasimi -> audios/qu · Los dos -> runasimi y luego castellano */
+  var AUD = {es:{}, qu:{}};
+  ((D.audios && D.audios.audios) ? ["es","qu"] : []).forEach(function(l){ (D.audios.audios[l] || []).forEach(function(id){ AUD[l][id] = true; }); });
+  function reproducir(boton, items, intro){
     if (sonando === boton) { parar(); return; }
     parar(); sonando = boton; pintarBotonesVoz();
     var langs = S.idioma === "es" ? ["es"] : S.idioma === "qu" ? ["qu"] : ["qu", "es"];
-    cola = []; langs.forEach(function(l){ (ids || []).forEach(function(id){ cola.push({l:l, id:id}); }); });
-    var primero = true, fallo = {};
-    function siguiente(){
-      if (sonando !== boton) return;
-      var it = cola.shift();
-      if (!it) { sonando = null; pintarBotonesVoz(); return; }
-      if (fallo[it.l]) return siguiente();
-      var a = new Audio("audios/" + it.l + "/" + it.id + ".mp3"); audioAct = a;
-      a.onended = function(){ primero = false; siguiente(); };
-      var hecho = false;
-      a.onerror = function(){
-        if (hecho) return; hecho = true;
-        fallo[it.l] = true;
-        if (Object.keys(fallo).length === langs.length || (primero && it.l === langs[langs.length-1])) {
-          if (it.l === "qu" || langs.indexOf("qu") >= 0) toast(uno(u("audio_qu_pronto")));
-          cola = []; hablarTTS(tts);
-        } else siguiente();
-      };
-      a.play().catch(function(){ a.onerror(); });
-    }
-    if (!ids || !ids.length) { hablarTTS(tts); return; }
-    siguiente();
+    var hayGrab = items.some(function(it){ return it.id && (AUD.es[it.id] || AUD.qu[it.id]); });
+    cola = [];
+    /* En runasimi solo suenan audios en runasimi: nunca la voz del celular en castellano */
+    if (intro && !hayGrab && langs.indexOf("es") >= 0) cola.push({tts:intro});
+    var faltoQu = false;
+    langs.forEach(function(l){
+      items.forEach(function(it){
+        if (it.id && AUD[l][it.id]) cola.push({src:"audios/" + l + "/" + it.id + ".mp3", es:it.es, l:l});
+        else if (l === "es") cola.push({tts:it.es});
+        else faltoQu = true;
+      });
+    });
+    if (faltoQu && S.idioma === "qu") toast(uno(u("audio_qu_falta")));
+    if (!cola.length) { sonando = null; pintarBotonesVoz(); return; }
+    siguiente(boton);
   }
+  function siguiente(boton){
+    if (sonando !== boton) return;
+    var it = cola.shift();
+    if (!it) { sonando = null; audioAct = null; pintarBotonesVoz(); return; }
+    if (it.tts) { decir(it.tts, function(){ siguiente(boton); }); return; }
+    var a = new Audio(it.src), hecho = false; audioAct = a;
+    a.onended = function(){ siguiente(boton); };
+    a.onerror = function(){ if (hecho) return; hecho = true; if (it.l === "qu") siguiente(boton); else decir(it.es, function(){ siguiente(boton); }); };
+    a.play().catch(function(){ a.onerror(); });
+  }
+  function decir(texto, luego){
+    if (!hayVoz || !texto) { luego(); return; }
+    var x = new SpeechSynthesisUtterance(texto); x.lang = "es-PE"; x.rate = 0.9;
+    var vs = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+    var pe = vs.filter(function(v){ return /PE|419|MX|US/i.test(v.lang); });
+    if (pe.length) x.voice = pe[0]; else if (vs.length) x.voice = vs[0];
+    x.onend = x.onerror = function(){ luego(); };
+    speechSynthesis.speak(x);
+  }
+  function sonarCorto(id){ var l = S.idioma === "es" ? "es" : "qu"; if (AUD[l][id]) { try { new Audio("audios/" + l + "/" + id + ".mp3").play().catch(function(){}); } catch (e) {} } }
   function btnVoz(id, etq){
-    if (!hayVoz) return '<button class="btn btn-suave" type="button" disabled>' + I.parlante + '<span>' + esc(uno(u("audio_no_disp"))) + '</span></button>';
+    if (S.idioma === "qu" && (id === "elegir" || id === "resumen")) return "";
+    if (!hayVoz && !(D.audios && D.audios.audios && D.audios.audios.es.length)) return '<button class="btn btn-suave" type="button" disabled>' + I.parlante + '<span>' + esc(uno(u("audio_no_disp"))) + '</span></button>';
     return '<button class="btn btn-audio" type="button" data-voz="' + id + '" data-etq="' + esc(etq) + '">' + I.parlante + '<span>' + esc(etq) + '</span></button>';
   }
   function pintarBotonesVoz(){
     Array.prototype.forEach.call(document.querySelectorAll("[data-voz]"), function(b){
       var activo = sonando === b.getAttribute("data-voz");
+      if (b.classList.contains("tour-voz")) { b.innerHTML = activo ? I.parar : I.parlante; return; }
       b.innerHTML = (activo ? I.parar : I.parlante) + "<span>" + esc(activo ? uno(u("detener")) : b.getAttribute("data-etq")) + "</span>";
     });
   }
@@ -603,6 +655,58 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     b.setAttribute("aria-label", tema === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
   }
 
+  /* ---------- recorrido guiado ---------- */
+  var TOUR = [
+    {sel:".contexto", txt:"tour_contexto"},
+    {sel:".banner", txt:"tour_aviso"},
+    {sel:".estado", txt:"tour_estado"},
+    {sel:'[data-voz="mes"]', txt:"tour_escuchar"},
+    {sel:".quehago", txt:"tour_quehago"},
+    {sel:"#tab-prox", txt:"tour_prox"},
+    {sel:"#btn-perfil", txt:"tour_datos"},
+    {sel:"#btn-tema", txt:"tour_tema"},
+    {sel:"#btn-ayuda", txt:"tour_ayuda"}
+  ];
+  var tourI = -1, pasos = [];
+  var capa = document.getElementById("capa-tour");
+  function preguntarTour(){
+    capa.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="tour-q"><div class="modal-caja">' +
+      '<span class="grande">' + I.pregunta + '</span><h2 id="tour-q">' + dos(u("tour_pregunta")) + '</h2>' +
+      '<div class="si-no"><button class="btn btn-prim" type="button" data-tour="si">' + esc(uno(u("tour_si"))) + '</button>' +
+      '<button class="btn btn-suave" type="button" data-tour="no">' + esc(uno(u("tour_no"))) + '</button></div></div></div>';
+  }
+  function empezarTour(){
+    if (S.vista !== "mes") { S.vista = "mes"; render(); }
+    window.scrollTo(0, 0);
+    pasos = TOUR.filter(function(p){ var el = document.querySelector(p.sel); return el && el.offsetParent !== null; });
+    tourI = 0; pintarTour();
+  }
+  function cerrarTour(){ tourI = -1; capa.innerHTML = ""; parar(); escribir("yaku.tour", true); }
+  function pintarTour(){
+    var p = pasos[tourI], el = document.querySelector(p.sel);
+    if (!el) { cerrarTour(); return; }
+    el.scrollIntoView({block:"center", behavior:"auto"});
+    setTimeout(function(){
+      var r = el.getBoundingClientRect(), m = 6, alto = window.innerHeight, G = 250;
+      var top = Math.max(r.top, 4), bot = Math.min(r.bottom, alto - 4);
+      r = {top:top, bottom:bot, left:r.left, width:r.width, height:Math.max(0, bot - top)};
+      var posGlobo = (alto - r.bottom >= G) ? 'top:' + (r.bottom + 16) + 'px'
+                   : (r.top >= G) ? 'bottom:' + (alto - r.top + 16) + 'px'
+                   : 'bottom:16px';
+      var ultimo = tourI === pasos.length - 1;
+      capa.innerHTML = '<div class="tour" role="dialog" aria-modal="true" aria-label="' + esc(uno(u("ayuda_label"))) + '">' +
+        '<div class="tour-hueco" style="top:' + (r.top - m) + 'px;left:' + (r.left - m) + 'px;width:' + (r.width + 2*m) + 'px;height:' + (r.height + 2*m) + 'px"></div>' +
+        '<div class="tour-globo" style="' + posGlobo + '">' +
+          '<small>' + esc(uno(u2("tour_paso", {n:tourI + 1, total:pasos.length}))) + '</small>' +
+          '<p>' + dos(u(p.txt)) + '</p>' +
+          '<div class="tour-fila">' +
+            (S.idioma === "qu" ? '' : '<button class="tour-voz" type="button" data-voz="tour" data-etq="" aria-label="' + esc(uno(u("escuchar"))) + '">' + I.parlante + '</button>') +
+            (tourI > 0 ? '<button class="btn btn-suave" type="button" data-tour="atras">' + esc(uno(u("tour_atras"))) + '</button>' : '<button class="btn btn-suave" type="button" data-tour="no">' + esc(uno(u("tour_salir"))) + '</button>') +
+            '<button class="btn btn-prim" type="button" data-tour="' + (ultimo ? "fin" : "sig") + '">' + esc(uno(u(ultimo ? "tour_fin" : "tour_siguiente"))) + '</button>' +
+          '</div></div></div>';
+    }, 120);
+  }
+
   function render(){
     parar();
     var sinNav = S.vista === "elegir" || S.vista === "idioma" || S.vista === "datos";
@@ -610,6 +714,7 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     document.getElementById("btn-perfil").hidden = S.vista === "idioma" || S.vista === "datos";
     document.getElementById("zona").textContent = uno(u("zona"));
     document.getElementById("btn-perfil").innerHTML = I.persona;
+    var ba = document.getElementById("btn-ayuda"); ba.innerHTML = I.pregunta; ba.setAttribute("aria-label", uno(u("ayuda_label"))); ba.hidden = sinNav;
     document.getElementById("btn-perfil").setAttribute("aria-label", uno(u("mis_datos")));
     document.getElementById("tab-mes").innerHTML = I.gota + "<span>" + esc(uno(u("tab_mes"))) + "</span>";
     document.getElementById("tab-prox").innerHTML = I.calendario + "<span>" + esc(uno(u("tab_prox"))) + "</span>";
@@ -624,6 +729,16 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
 
   document.addEventListener("click", function(ev){
     var t = ev.target.closest("button"); if (!t) return;
+    if (t.dataset.tour) {
+      var q = t.dataset.tour;
+      if (q === "si") { sonarCorto("ui_si"); empezarTour(); }
+      else if (q === "no") { sonarCorto("ui_no"); cerrarTour(); }
+      else if (q === "sig") { parar(); tourI++; pintarTour(); }
+      else if (q === "atras") { parar(); tourI--; pintarTour(); }
+      else if (q === "fin") cerrarTour();
+      return;
+    }
+    if (t.id === "btn-ayuda") { empezarTour(); return; }
     if (t.id === "btn-tema") { tema = tema === "dark" ? "light" : "dark"; escribir("yaku.tema", tema); aplicarTema(); return; }
     if (t.dataset.ir) { ir(t.dataset.ir); return; }
     if (t.dataset.idioma) {
@@ -641,16 +756,17 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
     if (t.dataset.edad) { S.mes = t.dataset.edad === "nueva" ? new Date().getMonth() + 1 : "establecida"; render(); return; }
     if (t.dataset.mes) { S.mes = +t.dataset.mes; render(); return; }
     if (t.dataset.otros) { S.verOtros = true; render(); return; }
-    if (t.dataset.listo) { guardarEleccion(); E = {cultivo:S.cultivo, mes:S.mes}; ir("mes"); return; }
+    if (t.dataset.listo) { guardarEleccion(); E = {cultivo:S.cultivo, mes:S.mes}; ir("mes"); if (!leer("yaku.tour", false)) preguntarTour(); return; }
     if (t.dataset.aviso) { S.vista = "proximos"; S.abierto = t.dataset.aviso; render(); var el = document.querySelector('[data-abrir="' + t.dataset.aviso + '"]'); if (el) el.scrollIntoView({block:"center"}); return; }
     if (t.dataset.abrir) { S.abierto = S.abierto === t.dataset.abrir ? null : t.dataset.abrir; var y = window.scrollY; render(); window.scrollTo(0,y); return; }
     if (t.dataset.quitar) { S.cel = ""; S.celTmp = ""; guardarPerfil(); S.guardado = false; render(); return; }
     if (t.dataset.voz) {
       var id = t.dataset.voz, fs = filas(), f;
-      if (id === "mes") { f = fs[indiceHoy(fs)]; reproducir(id, audioIds(f), textoVoz(f)); }
-      else if (id === "elegir") reproducir(id, [], u("titulo_elegir").es + " " + u("sub_elegir").es + " " + CULTS.map(function(k){ return nomCult(k).es; }).join(", ") + ".");
-      else if (id === "resumen") reproducir(id, [], u("titulo_prox").es + " " + fs.slice(indiceHoy(fs)).map(function(g){ return nomMes(mesNum(g)).es + ": " + resumenFila(g).es.replace(" · ", ", ") + "."; }).join(" "));
-      else { var m = id.slice(1); f = fs.filter(function(x){ return x.mes === m; })[0]; reproducir(id, audioIds(f), textoVoz(f)); }
+      if (id === "mes") { f = fs[indiceHoy(fs)]; reproducir(id, listaAudio(f), textoVoz(f)); }
+      else if (id === "elegir") reproducir(id, [{es:u("titulo_elegir").es + " " + u("sub_elegir").es + " " + CULTS.map(function(k){ return nomCult(k).es; }).join(", ") + "."}]);
+      else if (id === "resumen") reproducir(id, [{es:u("titulo_prox").es + " " + fs.slice(indiceHoy(fs)).map(function(g){ return nomMes(mesNum(g)).es + ": " + resumenFila(g).es.replace(" · ", ", ") + "."; }).join(" ")}]);
+      else if (id === "tour") reproducir(id, [{es:u(pasos[tourI].txt).es}]);
+      else { var m = id.slice(1); f = fs.filter(function(x){ return x.mes === m; })[0]; reproducir(id, listaAudio(f), textoVoz(f)); }
     }
   });
 
@@ -669,6 +785,8 @@ main{max-width:480px;margin:0 auto;padding-inline:20px;padding-block:18px 128px;
 
   aplicarTema();
   render();
+  if (S.vista === "mes" && !leer("yaku.tour", false)) preguntarTour();
+  window.addEventListener("resize", function(){ if (tourI >= 0) pintarTour(); });
 })();
 
 </script>
